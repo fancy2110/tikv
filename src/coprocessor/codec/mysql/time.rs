@@ -22,7 +22,6 @@ use coprocessor::codec::mysql::{self, types, parse_frac, check_fsp};
 use coprocessor::codec::mysql::Decimal;
 use super::super::{Result, TEN_POW};
 
-
 const ZERO_DATETIME_STR: &'static str = "0000-00-00 00:00:00";
 const ZERO_DATE_STR: &'static str = "0000-00-00";
 /// In go, `time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)` will be adjusted to
@@ -41,19 +40,19 @@ fn zero_datetime(tz: &FixedOffset) -> Time {
 
 #[allow(too_many_arguments)]
 #[inline]
-fn ymd_hms_nanos<T: TimeZone>(tz: &T,
+pub fn ymd_hms_nanos<T: TimeZone>(tz: &T,
                               year: i32,
                               month: u32,
                               day: u32,
                               hour: u32,
                               min: u32,
                               secs: u32,
-                              nanos: u32)
+                              nanos: i64)
                               -> Result<DateTime<T>> {
     tz.ymd_opt(year, month, day)
         .and_hms_opt(hour, min, secs)
         .single()
-        .and_then(|t| t.checked_add(Duration::nanoseconds(nanos as i64)))
+        .and_then(|t| t.checked_add(Duration::nanoseconds(nanos)))
         .ok_or_else(|| {
             box_err!("'{}-{}-{} {}:{}:{}.{:09}' is not a valid datetime",
                      year,
@@ -247,7 +246,7 @@ impl Time {
                                    h,
                                    minute,
                                    sec,
-                                   frac * TEN_POW[9 - fsp as usize]));
+                                   (frac * TEN_POW[9 - fsp as usize]) as i64));
         Time::new(t, types::DATETIME as u8, fsp as i8)
     }
 
@@ -269,7 +268,7 @@ impl Time {
         let second = (hms & ((1 << 6) - 1)) as u32;
         let minute = ((hms >> 6) & ((1 << 6) - 1)) as u32;
         let hour = (hms >> 12) as u32;
-        let nanosec = ((u & ((1 << 24) - 1)) * 1000) as u32;
+        let nanosec = ((u & ((1 << 24) - 1)) * 1000) as i64;
         let t = if tp == types::TIMESTAMP {
             let t = try!(ymd_hms_nanos(&UTC, year, month, day, hour, minute, second, nanosec));
             tz.from_utc_datetime(&t.naive_utc())

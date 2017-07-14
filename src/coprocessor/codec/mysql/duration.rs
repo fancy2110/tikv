@@ -18,10 +18,14 @@ use std::fmt::{self, Display, Formatter};
 use std::{str, i64, u64};
 use std::io::Write;
 
+use chrono::{Datelike, Local, FixedOffset};
+
 use super::super::Result;
+use super::time::{ymd_hms_nanos, Time};
+use super::types;
 use super::{Decimal, parse_frac, check_fsp};
 
-const NANOS_PER_SEC: i64 = 1_000_000_000;
+pub const NANOS_PER_SEC: i64 = 1_000_000_000;
 const NANO_WIDTH: u32 = 9;
 const SECS_PER_HOUR: u64 = 3600;
 const SECS_PER_MINUTE: u64 = 60;
@@ -110,6 +114,20 @@ impl Duration {
             neg: neg,
             fsp: try!(check_fsp(fsp)),
         })
+    }
+
+    // FIXME should we transform tz diff?
+    pub fn to_time(&self, tz: FixedOffset) -> Result<Time> {
+        let t = Local::today();
+        let d = try!(ymd_hms_nanos(&tz,
+                              t.year(),
+                              t.month(),
+                              t.day(),
+                              0,
+                              0,
+                              0,
+                              self.to_nanos()));
+        Time::new(d, types::DATETIME, self.fsp as i8)
     }
 
     // `parse` parses the time form a formatted string with a fractional seconds part,

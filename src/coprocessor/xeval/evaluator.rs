@@ -520,7 +520,12 @@ impl Evaluator {
 
     fn eval_scalar_function(&mut self, ctx: &EvalContext, expr: &Expr) -> Result<Datum> {
         match expr.get_sig() {
-            ScalarFuncSig::AbsInt => self.abs_int(ctx, expr),
+            ScalarFuncSig::CastDurationAsInt => self.cast_duration_as_int(ctx, expr),
+            ScalarFuncSig::CastDurationAsReal => self.cast_duration_as_real(ctx, expr),
+            ScalarFuncSig::CastDurationAsString => self.cast_duration_as_string(ctx, expr),
+            ScalarFuncSig::CastDurationAsDecimal => self.cast_duration_as_decimal(ctx, expr),
+            ScalarFuncSig::CastDurationAsTime => self.cast_duration_as_time(ctx, expr),
+            ScalarFuncSig::CastDurationAsDuration => self.cast_duration_as_duration(ctx, expr),
             _ => Err(Error::Expr(format!("unsupported scalar function: {:?}", expr.get_sig()))),
         }
     }

@@ -56,10 +56,10 @@ fn parse_frac(s: &[u8], fsp: u8) -> Result<u32> {
     }
 }
 
-mod duration;
+pub mod duration;
 pub mod decimal;
 pub mod types;
-mod time;
+pub mod time;
 mod json;
 
 pub use self::duration::Duration;
